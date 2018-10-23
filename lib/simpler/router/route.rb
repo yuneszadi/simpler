@@ -9,12 +9,24 @@ module Simpler
         @path = path
         @controller = controller
         @action = action
+        @path_arr = path.split('/').reject { |path| path.empty? }
       end
 
-      def match?(method, path)
-        @method == method && path.match(@path)
+      def match?(env)
+        env['simpler.route_params'] = ''
+        method = env['REQUEST_METHOD'].downcase.to_sym
+        path = env['PATH_INFO']
+        if @method == method
+          path = path.split('/').reject { |path| path.empty? }
+          @path_arr.each_with_index do |value, index|
+            if value[0] == ':'
+              env['simpler.route_params'] += "#{path[index]}"
+            else
+              return false unless value == path[index]
+            end
+          end
+        end
       end
-
     end
   end
 end
